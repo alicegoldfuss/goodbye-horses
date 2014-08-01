@@ -56,7 +56,7 @@ def main(args):
     prog = args[0]
     args = args[1:]
     dump_ast = False
-    if args[0] == '--ast':
+    if args and args[0] == '--ast':
         dump_ast = True
         args = args[1:]
 
