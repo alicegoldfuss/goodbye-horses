@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+#
+# Do you prefer saying "goodbye" more than "hello"?
+# Do you love horses more than the world?
+# Are you a Python programmer?
+# Then you clearly need ...
+#
+HORSETHON = """
+   __  __     ______     ______     ______     ______     ______   __  __     ______     __   __    
+  /\ \_\ \   /\  __ \   /\  == \   /\  ___\   /\  ___\   /\__  _\ /\ \_\ \   /\  __ \   /\ "-.\ \   
+  \ \  __ \  \ \ \/\ \  \ \  __<   \ \___  \  \ \  __\   \/_/\ \/ \ \  __ \  \ \ \/\ \  \ \ \-.  \  
+   \ \_\ \_\  \ \_____\  \ \_\ \_\  \/\_____\  \ \_____\    \ \_\  \ \_\ \_\  \ \_____\  \ \_\\"\_\ 
+    \/_/\/_/   \/_____/   \/_/ /_/   \/_____/   \/_____/     \/_/   \/_/\/_/   \/_____/   \/_/ \/_/ 
+ 
+"""
+
+import ast
+import sys
+import re
+
+regex = re.compile(r'(hello|world)', re.IGNORECASE)
+
+class Equineception(Exception):
+    pass
+
+def funge(original, replacement):
+    original += ("@" * max(len(replacement) - len(original), 0))
+    result = ""
+    for a, b in zip(original, replacement):
+        if a.isupper():
+            b = b.upper()
+        else:
+            b = b.lower()
+        result += b
+    return result
+
+def replacer(m):
+    if m.group(1).lower() == 'hello':
+        return funge(m.group(1), 'goodbye')
+    elif m.group(1).lower() == 'world':
+        return funge(m.group(1), 'horses')
+    else:
+        raise Equineception('ANGRY AND CONFUSED NEIGH')
+
+def usage(prog):
+    print >>sys.stderr, HORSETHON
+    print >>sys.stderr, "\"Hello World\"? More like \"Goodbye Horses.\" -- @alicegoldfuss, July 2014"
+    print >>sys.stderr
+    print >>sys.stderr, "horsethon runs your Python scripts with less \"Hello World\" and more \"Goodbye Horses\""
+    print >>sys.stderr
+    print >>sys.stderr, "Usage: %s <file>" % prog
+    print >>sys.stderr
+    sys.exit(1)
+
+def main(args):
+    prog = args[0]
+    args = args[1:]
+    dump_ast = False
+    if args[0] == '--ast':
+        dump_ast = True
+        args = args[1:]
+
+    if len(args) != 1:
+        usage(prog)
+
+    filename = args[0]
+    with open(filename, "rb") as stream:
+        a = ast.parse(stream.read(), filename)
+        for node in ast.walk(a):
+            if type(node) == ast.Str and regex.search(node.s):
+                node.s = regex.sub(replacer, node.s)
+        if dump_ast:
+            print ast.dump(a)
+            sys.exit(0)
+        eval(compile(a, filename, "exec"))
+
+if __name__ == '__main__':
+    main(sys.argv)
+
